@@ -92,7 +92,8 @@
     <option value="2-3">2-3</option>
   </select>
 
-  <button id="btnValider" onclick="envoyerPari()">Valider mon pari</button>
+  <!-- 🔥 IMPORTANT : plus de onclick ici -->
+  <button id="btnValider">Valider mon pari</button>
 
   <div class="success" id="successMsg">
     Pari enregistré ! Bonne chance 🍀
@@ -207,6 +208,10 @@
       document.getElementById("prenom").value = "";
       document.getElementById("telephone").value = "";
     }
+
+    // 🔥 Correction : on attache l'événement ici
+    document.getElementById("btnValider").addEventListener("click", envoyerPari);
+
   </script>
 
 </body>
