@@ -49,6 +49,13 @@
       text-align: center;
       font-weight: bold;
     }
+    #timerPublic {
+      text-align:center;
+      font-size:18px;
+      margin:10px 0;
+      font-weight:bold;
+      color:#444;
+    }
   </style>
 </head>
 
@@ -57,8 +64,10 @@
   <h2>Pariez sur la partie</h2>
 
   <label>Nom de la partie</label>
-  <!-- 🔒 Champ readonly, rempli automatiquement -->
   <input type="text" id="partie" readonly>
+
+  <!-- TIMER PUBLIC -->
+  <div id="timerPublic">Fermeture dans : --</div>
 
   <div id="closedMsg" class="closed">
     Les paris sont fermés.
@@ -109,7 +118,9 @@
     const db = getFirestore(app);
     const docRef = doc(db, "paris", "participants");
 
-    // 🔥 Mise à jour automatique du nom de la partie + statut paris
+    let timerInterval = null;
+
+    // 🔥 Mise à jour automatique du nom de la partie + statut paris + timer
     onSnapshot(docRef, (snap) => {
       if (!snap.exists()) return;
 
@@ -125,6 +136,30 @@
       } else {
         document.getElementById("closedMsg").style.display = "none";
         document.getElementById("btnValider").disabled = false;
+      }
+
+      // TIMER
+      if (timerInterval) clearInterval(timerInterval);
+
+      if (data.parisOuverts && data.fermetureTimestamp) {
+        function updateTimerPublic() {
+          const diff = data.fermetureTimestamp - Date.now();
+          if (diff <= 0) {
+            document.getElementById("timerPublic").innerText = "Paris fermés";
+            document.getElementById("btnValider").disabled = true;
+            return;
+          }
+          const m = Math.floor(diff / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          document.getElementById("timerPublic").innerText =
+            `Fermeture dans : ${m}m ${s}s`;
+        }
+
+        updateTimerPublic();
+        timerInterval = setInterval(updateTimerPublic, 1000);
+      } else {
+        document.getElementById("timerPublic").innerText = "Paris fermés";
+        document.getElementById("btnValider").disabled = true;
       }
     });
 
