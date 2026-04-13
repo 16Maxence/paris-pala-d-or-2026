@@ -39,6 +39,16 @@
       border: 1px solid #8fda8f;
       display: none;
     }
+    .closed {
+      background: #ffd4d4;
+      border: 1px solid #ff8f8f;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -47,8 +57,12 @@
   <h2>Pariez sur la partie</h2>
 
   <label>Nom de la partie</label>
-  <!-- 🔒 Champ verrouillé -->
-  <input type="text" id="partie" value="Equipe1 - Equipe2" readonly>
+  <!-- 🔒 Champ readonly, rempli automatiquement -->
+  <input type="text" id="partie" readonly>
+
+  <div id="closedMsg" class="closed">
+    Les paris sont fermés.
+  </div>
 
   <label>Nom</label>
   <input type="text" id="nom">
@@ -69,7 +83,7 @@
     <option value="2-3">2-3</option>
   </select>
 
-  <button onclick="envoyerPari()">Valider mon pari</button>
+  <button id="btnValider" onclick="envoyerPari()">Valider mon pari</button>
 
   <div class="success" id="successMsg">
     Pari enregistré ! Bonne chance 🍀
@@ -78,7 +92,7 @@
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, updateDoc, arrayUnion, getDoc } 
+    import { getFirestore, doc, setDoc, updateDoc, arrayUnion, getDoc, onSnapshot } 
       from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -93,7 +107,28 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const docRef = doc(db, "paris", "participants");
 
+    // 🔥 Mise à jour automatique du nom de la partie + statut paris
+    onSnapshot(docRef, (snap) => {
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+
+      // Nom de la partie
+      document.getElementById("partie").value = data.partieCourante || "Non définie";
+
+      // Paris ouverts / fermés
+      if (data.parisOuverts === false) {
+        document.getElementById("closedMsg").style.display = "block";
+        document.getElementById("btnValider").disabled = true;
+      } else {
+        document.getElementById("closedMsg").style.display = "none";
+        document.getElementById("btnValider").disabled = false;
+      }
+    });
+
+    // 🔥 Envoi du pari
     async function envoyerPari() {
       const nom = document.getElementById("nom").value.trim();
       const prenom = document.getElementById("prenom").value.trim();
@@ -101,16 +136,20 @@
       const score = document.getElementById("score").value;
       const partie = document.getElementById("partie").value.trim();
 
-      if (!nom || !prenom || !telephone || !partie) {
+      if (!nom || !prenom || !telephone) {
         alert("Merci de remplir tous les champs.");
         return;
       }
 
-      const docRef = doc(db, "paris", "participants");
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) {
         await setDoc(docRef, { liste: [] });
+      }
+
+      const data = snap.data();
+      if (data.parisOuverts === false) {
+        alert("Les paris sont fermés.");
+        return;
       }
 
       await updateDoc(docRef, {
