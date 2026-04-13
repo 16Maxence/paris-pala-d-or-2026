@@ -8,50 +8,59 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #111;
+      background: #000;
       color: white;
       text-align: center;
       padding: 20px;
     }
 
     h1 {
-      font-size: 32px;
+      font-size: 36px;
       margin-bottom: 10px;
+      color: #ff7b00;
     }
 
     #partie {
-      font-size: 22px;
+      font-size: 24px;
       margin-bottom: 10px;
       opacity: 0.9;
     }
 
     #timer {
-      font-size: 20px;
+      font-size: 22px;
       margin-bottom: 30px;
-      opacity: 0.8;
+      color: #ff7b00;
     }
 
     .scores {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
     }
 
     .box {
-      background: #222;
-      padding: 20px;
-      border-radius: 10px;
-      font-size: 26px;
-      border: 2px solid #444;
+      background: #111;
+      padding: 25px;
+      border-radius: 12px;
+      font-size: 28px;
+      border: 2px solid #333;
+      color: white;
     }
 
     .count {
-      font-size: 40px;
+      font-size: 48px;
       font-weight: bold;
       margin-top: 10px;
-      color: #00ff88;
+      color: #ff7b00;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    /* Animation score */
+    .pulse {
+      transform: scale(1.35);
+      color: #ff9500 !important;
     }
 
     #qr {
@@ -110,6 +119,10 @@
     const docRef = doc(db, "paris", "participants");
 
     let timerInterval = null;
+    let lastStats = {
+      "3-0": 0, "3-1": 0, "3-2": 0,
+      "0-3": 0, "1-3": 0, "2-3": 0
+    };
 
     onSnapshot(docRef, (docSnap) => {
       if (!docSnap.exists()) return;
@@ -135,12 +148,19 @@
         if (stats[p.score] !== undefined) stats[p.score]++;
       });
 
-      document.getElementById("s30").innerText = stats["3-0"];
-      document.getElementById("s31").innerText = stats["3-1"];
-      document.getElementById("s32").innerText = stats["3-2"];
-      document.getElementById("s03").innerText = stats["0-3"];
-      document.getElementById("s13").innerText = stats["1-3"];
-      document.getElementById("s23").innerText = stats["2-3"];
+      // Mise à jour + animation
+      for (const score in stats) {
+        const el = document.getElementById("s" + score.replace("-", ""));
+        if (stats[score] !== lastStats[score]) {
+          el.innerText = stats[score];
+
+          // Animation pulse
+          el.classList.add("pulse");
+          setTimeout(() => el.classList.remove("pulse"), 250);
+        }
+      }
+
+      lastStats = stats;
 
       // TIMER
       if (timerInterval) clearInterval(timerInterval);
