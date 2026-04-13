@@ -21,8 +21,14 @@
 
     #partie {
       font-size: 22px;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
       opacity: 0.9;
+    }
+
+    #timer {
+      font-size: 20px;
+      margin-bottom: 30px;
+      opacity: 0.8;
     }
 
     .scores {
@@ -58,11 +64,15 @@
 
   <h1>PARIS EN DIRECT</h1>
 
-  <!-- 🔥 Partie affichée correctement -->
+  <!-- Partie -->
   <div id="partie">
     <strong>Partie en cours :</strong> <span id="nomPartie">Chargement...</span>
   </div>
 
+  <!-- TIMER -->
+  <div id="timer">Fermeture dans : --</div>
+
+  <!-- Scores -->
   <div class="scores">
     <div class="box">3-0<div class="count" id="s30">0</div></div>
     <div class="box">3-1<div class="count" id="s31">0</div></div>
@@ -72,6 +82,7 @@
     <div class="box">2-3<div class="count" id="s23">0</div></div>
   </div>
 
+  <!-- QR Code -->
   <div id="qr">
     <img src="qr.png" width="200">
     <p>Scannez pour parier</p>
@@ -98,11 +109,17 @@
 
     const docRef = doc(db, "paris", "participants");
 
+    let timerInterval = null;
+
     onSnapshot(docRef, (docSnap) => {
       if (!docSnap.exists()) return;
 
       const data = docSnap.data();
       const liste = data.liste || [];
+
+      // Nom de la partie
+      document.getElementById("nomPartie").innerText =
+        data.partieCourante || "Non définie";
 
       // Compteurs
       const stats = {
@@ -114,14 +131,9 @@
         "2-3": 0
       };
 
-      let partieNom = data.partieCourante || "Non définie";
-
       liste.forEach(p => {
         if (stats[p.score] !== undefined) stats[p.score]++;
       });
-
-      // Mise à jour affichage
-      document.getElementById("nomPartie").innerText = partieNom;
 
       document.getElementById("s30").innerText = stats["3-0"];
       document.getElementById("s31").innerText = stats["3-1"];
@@ -129,6 +141,28 @@
       document.getElementById("s03").innerText = stats["0-3"];
       document.getElementById("s13").innerText = stats["1-3"];
       document.getElementById("s23").innerText = stats["2-3"];
+
+      // TIMER
+      if (timerInterval) clearInterval(timerInterval);
+
+      if (data.parisOuverts && data.fermetureTimestamp) {
+        function updateTimer() {
+          const diff = data.fermetureTimestamp - Date.now();
+          if (diff <= 0) {
+            document.getElementById("timer").innerText = "Paris fermés";
+            return;
+          }
+          const m = Math.floor(diff / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          document.getElementById("timer").innerText =
+            `Fermeture dans : ${m}m ${s}s`;
+        }
+
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+      } else {
+        document.getElementById("timer").innerText = "Paris fermés";
+      }
     });
   </script>
 
