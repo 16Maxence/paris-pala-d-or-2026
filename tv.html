@@ -22,7 +22,7 @@
     #partie {
       font-size: 22px;
       margin-bottom: 30px;
-      opacity: 0.8;
+      opacity: 0.9;
     }
 
     .scores {
@@ -57,7 +57,11 @@
 <body>
 
   <h1>PARIS EN DIRECT</h1>
-  <div id="partie">Chargement...</div>
+
+  <!-- 🔥 Partie affichée correctement -->
+  <div id="partie">
+    <strong>Partie en cours :</strong> <span id="nomPartie">Chargement...</span>
+  </div>
 
   <div class="scores">
     <div class="box">3-0<div class="count" id="s30">0</div></div>
@@ -110,15 +114,14 @@
         "2-3": 0
       };
 
-      let partieNom = "Partie en cours";
+      let partieNom = data.partieCourante || "Non définie";
 
       liste.forEach(p => {
         if (stats[p.score] !== undefined) stats[p.score]++;
-        partieNom = p.partie; // On prend le dernier pari pour afficher la partie
       });
 
       // Mise à jour affichage
-      document.getElementById("partie").innerText = partieNom;
+      document.getElementById("nomPartie").innerText = partieNom;
 
       document.getElementById("s30").innerText = stats["3-0"];
       document.getElementById("s31").innerText = stats["3-1"];
