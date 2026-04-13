@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Stats en direct</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    #partie {
+      font-size: 22px;
+      margin-bottom: 30px;
+      opacity: 0.8;
+    }
+
+    .scores {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .box {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 26px;
+      border: 2px solid #444;
+    }
+
+    .count {
+      font-size: 40px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #00ff88;
+    }
+
+    #qr {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>PARIS EN DIRECT</h1>
+  <div id="partie">Chargement...</div>
+
+  <div class="scores">
+    <div class="box">3-0<div class="count" id="s30">0</div></div>
+    <div class="box">3-1<div class="count" id="s31">0</div></div>
+    <div class="box">3-2<div class="count" id="s32">0</div></div>
+    <div class="box">0-3<div class="count" id="s03">0</div></div>
+    <div class="box">1-3<div class="count" id="s13">0</div></div>
+    <div class="box">2-3<div class="count" id="s23">0</div></div>
+  </div>
+
+  <div id="qr">
+    <img src="qr.png" width="200">
+    <p>Scannez pour parier</p>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot } 
+      from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChlD3Lx2CBTWl88Tjbz-693f_s6jA4eys",
+      authDomain: "paris-pala-d-or.firebaseapp.com",
+      projectId: "paris-pala-d-or",
+      storageBucket: "paris-pala-d-or.firebasestorage.app",
+      messagingSenderId: "673652668583",
+      appId: "1:673652668583:web:94d8879777b53561b78382",
+      measurementId: "G-PYN7V7XVWC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const docRef = doc(db, "paris", "participants");
+
+    onSnapshot(docRef, (docSnap) => {
+      if (!docSnap.exists()) return;
+
+      const data = docSnap.data();
+      const liste = data.liste || [];
+
+      // Compteurs
+      const stats = {
+        "3-0": 0,
+        "3-1": 0,
+        "3-2": 0,
+        "0-3": 0,
+        "1-3": 0,
+        "2-3": 0
+      };
+
+      let partieNom = "Partie en cours";
+
+      liste.forEach(p => {
+        if (stats[p.score] !== undefined) stats[p.score]++;
+        partieNom = p.partie; // On prend le dernier pari pour afficher la partie
+      });
+
+      // Mise à jour affichage
+      document.getElementById("partie").innerText = partieNom;
+
+      document.getElementById("s30").innerText = stats["3-0"];
+      document.getElementById("s31").innerText = stats["3-1"];
+      document.getElementById("s32").innerText = stats["3-2"];
+      document.getElementById("s03").innerText = stats["0-3"];
+      document.getElementById("s13").innerText = stats["1-3"];
+      document.getElementById("s23").innerText = stats["2-3"];
+    });
+  </script>
+
+</body>
+</html>
