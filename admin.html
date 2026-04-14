@@ -10,7 +10,7 @@
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       padding: 20px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
     }
     h2 { text-align: center; }
@@ -37,6 +37,15 @@
       border-radius: 10px;
       margin-top: 20px;
       border: 1px solid #ddd;
+    }
+    table th, table td {
+      padding: 8px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -93,10 +102,29 @@
     <button id="btnExportCSV" style="background:#0077cc;">Exporter en CSV</button>
   </div>
 
+  <!-- Liste des paris -->
+  <div class="section">
+    <h3>Liste des paris en direct</h3>
+
+    <table>
+      <thead>
+        <tr style="background:#eee;">
+          <th>Nom</th>
+          <th>Prénom</th>
+          <th>Téléphone</th>
+          <th>Score</th>
+          <th>Partie</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyParis"></tbody>
+    </table>
+  </div>
+
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, updateDoc, setDoc, onSnapshot } 
+    import { getFirestore, doc, updateDoc, setDoc, onSnapshot, getDoc } 
       from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -115,7 +143,7 @@
 
     let timerInterval = null;
 
-    // 🔥 Mise à jour en direct de l'état admin
+    // 🔥 Mise à jour en direct de l'état admin + liste
     onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
 
@@ -144,6 +172,29 @@
       } else {
         document.getElementById("timerAdmin").innerText = "--";
       }
+
+      // 🔥 LISTE DES PARIS EN DIRECT
+      const tbody = document.getElementById("tbodyParis");
+      tbody.innerHTML = "";
+
+      const liste = data.liste || [];
+
+      liste
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .forEach(p => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+            <td>${p.nom}</td>
+            <td>${p.prenom}</td>
+            <td>${p.telephone}</td>
+            <td>${p.score}</td>
+            <td>${p.partie}</td>
+            <td>${new Date(p.timestamp).toLocaleString("fr-FR")}</td>
+          `;
+
+          tbody.appendChild(tr);
+        });
     });
 
     // 🔥 Mettre à jour la partie
@@ -191,7 +242,7 @@
 
     // 🔥 EXPORT CSV
     document.getElementById("btnExportCSV").addEventListener("click", async () => {
-      const snap = await (await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")).getDoc(ref);
+      const snap = await getDoc(ref);
       if (!snap.exists()) return alert("Aucun pari trouvé");
 
       const data = snap.data();
